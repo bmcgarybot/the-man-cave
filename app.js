@@ -134,12 +134,12 @@ async function searchWeather() {
     if(!geo.length) throw new Error('nope');
     userLat=parseFloat(geo[0].lat); userLon=parseFloat(geo[0].lon);
     userCity=geo[0].display_name.split(',').slice(0,2).join(',').trim();
-    $('locDot').className='loc-dot ok'; $('locText').textContent='\ud83d\udccd '+userCity;
+    $('locDot').className='loc-dot ok'; $('locText').textContent=userCity;
     await resolveNWS(userLat,userLon);
     await Promise.all([loadWeather(), loadFire()]);
     inp.value='';
   } catch(e) {
-    $('weatherCard').innerHTML=errHTML('\ud83d\udd0d','Couldn\'t find "'+q+'"','Try a city name like "Phoenix, AZ"');
+    $('weatherCard').innerHTML=errHTML('—','Couldn\'t find "'+q+'"','Try a city name like "Phoenix, AZ"');
   } finally { btn.textContent='Go'; btn.disabled=false; }
 }
 
@@ -188,13 +188,13 @@ async function loadWeather() {
         +'<span class="ext-temp">'+p.temperature+'\u00b0'+p.temperatureUnit+'</span></div>'
         +'<div class="ext-body">'+p.detailedForecast+'</div></div>';
     });
-    $('extForecast').innerHTML=eh||emptyHTML('\ud83c\udf24\ufe0f','No forecast data');
+    $('extForecast').innerHTML=eh||emptyHTML('—','No forecast data');
   } catch(e) {
-    $('weatherCard').innerHTML=errHTML('\ud83c\udf24\ufe0f',
+    $('weatherCard').innerHTML=errHTML('—',
       nwsForecastUrl?'Weather temporarily unavailable':'NWS only covers US locations',
       'Will retry on next refresh');
     $('forecastSection').innerHTML='';
-    $('extForecast').innerHTML=errHTML('\ud83c\udf21\ufe0f','Forecast unavailable','Try searching a US city');
+    $('extForecast').innerHTML=errHTML('—','Forecast unavailable','Try searching a US city');
   }
 }
 
@@ -237,7 +237,7 @@ async function loadFire() {
       $('fireCard').innerHTML=h; $('alertsFire').innerHTML=h;
     }
   } catch(e) {
-    var fb=errHTML('\ud83d\udd25','Fire data temporarily unavailable','Will retry shortly');
+    var fb=errHTML('—','Fire data temporarily unavailable','Will retry shortly');
     $('fireCard').innerHTML=fb; $('alertsFire').innerHTML=fb;
   }
 }
@@ -299,13 +299,13 @@ async function loadBoard(sport,boardId,countId) {
     var cel=$(countId); if(cel)cel.textContent=ev.length;
     if(!ev.length){
       var si=data.leagues&&data.leagues[0]&&data.leagues[0].season;
-      $(boardId).innerHTML=emptyHTML('\ud83d\udcc5','No games scheduled today',
+      $(boardId).innerHTML=emptyHTML('—','No games scheduled today',
         si?'Season: '+(si.displayName||si.year):'Check back on game days');
       return;
     }
     $(boardId).innerHTML=ev.map(function(g,i){return gameHTML(g,i,sport);}).join('');
   } catch(e) {
-    $(boardId).innerHTML=errHTML('\ud83d\udce1','Scores temporarily unavailable','Will retry on next refresh');
+    $(boardId).innerHTML=errHTML('—','Scores temporarily unavailable','Will retry on next refresh');
     var cel2=$(countId); if(cel2)cel2.textContent='\u2014';
   }
 }
@@ -363,9 +363,9 @@ async function loadFavs() {
         +(record?'<div class="fav-rec">'+record+'</div>':'')
         +'</div></div><div class="fav-body">'+body+'</div></div>';
     });
-    $('favTeams').innerHTML=html||emptyHTML('\u2b50','No team data available');
+    $('favTeams').innerHTML=html||emptyHTML('—','No team data available');
   } catch(e) {
-    $('favTeams').innerHTML=errHTML('\u2b50','Team updates unavailable','Will retry shortly');
+    $('favTeams').innerHTML=errHTML('—','Team updates unavailable','Will retry shortly');
   }
 }
 
@@ -376,7 +376,7 @@ async function loadNews() {
   try {
     var data=await fetchJ(NBA_NEWS_EP);
     var arts=data.articles||[];
-    if(!arts.length){$('homeNews').innerHTML=emptyHTML('\ud83d\udcf0','No headlines right now');return;}
+    if(!arts.length){$('homeNews').innerHTML=emptyHTML('—','No headlines right now');return;}
     var h='';
     arts.slice(0,8).forEach(function(a,i){
       var img=(a.images&&a.images[0]&&a.images[0].url)||'';
@@ -390,7 +390,7 @@ async function loadNews() {
     });
     $('homeNews').innerHTML=h;
   } catch(e) {
-    $('homeNews').innerHTML=errHTML('\ud83d\udcf0','Headlines unavailable','Will retry shortly');
+    $('homeNews').innerHTML=errHTML('—','Headlines unavailable','Will retry shortly');
   }
 }
 
