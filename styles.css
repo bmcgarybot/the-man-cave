@@ -42,7 +42,7 @@ body{height:100%;height:-webkit-fill-available;overflow:hidden;background:var(--
 
 /* Tab Bar */
 .tab-bar{position:fixed;bottom:0;left:0;right:0;height:calc(var(--tab-h) + var(--safe-b));padding-bottom:var(--safe-b);background:linear-gradient(180deg,rgba(22,27,34,.98),rgba(13,17,23,.99));backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-top:1px solid var(--bdr);display:flex;justify-content:space-around;align-items:flex-start;padding-top:6px;z-index:1000}
-.tab-btn{display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 14px 2px;cursor:pointer;border:none;background:none;color:var(--t3);font-size:10px;font-weight:600;transition:color .25s,transform .25s;position:relative;min-width:52px;letter-spacing:.3px}
+.tab-btn{display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 14px 2px;cursor:pointer;border:none;background:none;color:var(--t3);font-size:11px;font-weight:600;transition:color .25s,transform .25s;position:relative;min-width:52px;letter-spacing:.3px}
 .tab-btn .t-icon{width:24px;height:24px;transition:transform .3s cubic-bezier(.34,1.56,.64,1)}
 .tab-btn .t-icon svg{width:24px;height:24px;fill:currentColor}
 .tab-btn.active{color:var(--acc)}
@@ -55,9 +55,9 @@ body{height:100%;height:-webkit-fill-available;overflow:hidden;background:var(--
 /* Section Headers */
 .sh{display:flex;align-items:center;gap:8px;margin:22px 0 10px;padding:0 2px}
 .sh:first-child{margin-top:6px}
-.sh-icon{width:20px;height:20px;color:var(--acc);flex-shrink:0}
+.sh-icon{width:22px;height:22px;color:var(--acc);flex-shrink:0}
 .sh-icon.fire-icon{color:var(--red)}
-.sh-t{font-size:16px;font-weight:700;letter-spacing:-.3px}
+.sh-t{font-size:18px;font-weight:800;letter-spacing:-.3px}
 .sh-badge{background:linear-gradient(135deg,var(--acc),var(--acc2));color:#000;font-size:10px;font-weight:800;padding:2px 8px;border-radius:10px;margin-left:auto;font-variant-numeric:tabular-nums}
 
 /* Sub-tabs */
@@ -139,16 +139,16 @@ body{height:100%;height:-webkit-fill-available;overflow:hidden;background:var(--
 .game-card.live-game{border-color:rgba(239,68,68,.35);box-shadow:0 0 20px rgba(239,68,68,.08)}
 .game-card.fav-game{border-color:var(--bdr-a);box-shadow:0 0 16px rgba(240,165,0,.06)}
 .g-sbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid rgba(48,54,61,.4)}
-.g-status{font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.8px}
+.g-status{font-size:12px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.6px}
 .g-status.live{color:var(--red);display:flex;align-items:center;gap:6px}
 .live-dot{width:7px;height:7px;background:var(--red);border-radius:50%;animation:pulse 1.5s ease-in-out infinite;flex-shrink:0}
 .live-badge{background:var(--red);color:#fff;font-size:9px;font-weight:800;padding:3px 7px;border-radius:4px;letter-spacing:.8px}
 .g-bc{font-size:10px;color:var(--t3);background:rgba(48,54,61,.5);padding:3px 8px;border-radius:6px;font-weight:500}
-.t-row{display:flex;align-items:center;padding:6px 0;gap:12px}
-.t-logo{width:32px;height:32px;border-radius:8px;object-fit:contain;flex-shrink:0;background:rgba(255,255,255,.03);padding:2px}
-.t-name{flex:1;font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.t-rec{font-size:10px;color:var(--t3);font-weight:400;margin-left:4px}
-.t-score{font-size:24px;font-weight:900;min-width:42px;text-align:right;font-variant-numeric:tabular-nums;letter-spacing:-.5px}
+.t-row{display:flex;align-items:center;padding:7px 0;gap:12px}
+.t-logo{width:36px;height:36px;border-radius:8px;object-fit:contain;flex-shrink:0;background:rgba(255,255,255,.03);padding:2px}
+.t-name{flex:1;font-size:16px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.t-rec{font-size:11px;color:var(--t3);font-weight:400;margin-left:4px}
+.t-score{font-size:26px;font-weight:900;min-width:44px;text-align:right;font-variant-numeric:tabular-nums;letter-spacing:-.5px}
 .t-row.winner .t-name{color:var(--t1);font-weight:700}
 .t-row.winner .t-score{color:var(--acc2)}
 .t-row.loser{opacity:.45}

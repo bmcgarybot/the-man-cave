@@ -191,10 +191,10 @@ async function loadWeather() {
     $('extForecast').innerHTML=eh||emptyHTML('—','No forecast data');
   } catch(e) {
     $('weatherCard').innerHTML=errHTML('—',
-      nwsForecastUrl?'Weather temporarily unavailable':'NWS only covers US locations',
-      'Will retry on next refresh');
+      nwsForecastUrl?'Weather unavailable right now':'Weather only works for US locations',
+      'Trying again shortly');
     $('forecastSection').innerHTML='';
-    $('extForecast').innerHTML=errHTML('—','Forecast unavailable','Try searching a US city');
+    $('extForecast').innerHTML=errHTML('—','Forecast unavailable right now','Try a US city');
   }
 }
 
@@ -237,7 +237,7 @@ async function loadFire() {
       $('fireCard').innerHTML=h; $('alertsFire').innerHTML=h;
     }
   } catch(e) {
-    var fb=errHTML('—','Fire data temporarily unavailable','Will retry shortly');
+    var fb=errHTML('—','Fire data unavailable right now','Trying again shortly');
     $('fireCard').innerHTML=fb; $('alertsFire').innerHTML=fb;
   }
 }
@@ -299,13 +299,13 @@ async function loadBoard(sport,boardId,countId) {
     var cel=$(countId); if(cel)cel.textContent=ev.length;
     if(!ev.length){
       var si=data.leagues&&data.leagues[0]&&data.leagues[0].season;
-      $(boardId).innerHTML=emptyHTML('—','No games scheduled today',
-        si?'Season: '+(si.displayName||si.year):'Check back on game days');
+      $(boardId).innerHTML=emptyHTML('—','No games today',
+        si?'Season: '+(si.displayName||si.year):'Check back later');
       return;
     }
     $(boardId).innerHTML=ev.map(function(g,i){return gameHTML(g,i,sport);}).join('');
   } catch(e) {
-    $(boardId).innerHTML=errHTML('—','Scores temporarily unavailable','Will retry on next refresh');
+    $(boardId).innerHTML=errHTML('—','Scores unavailable right now','Trying again shortly');
     var cel2=$(countId); if(cel2)cel2.textContent='\u2014';
   }
 }
@@ -353,7 +353,7 @@ async function loadFavs() {
           body='<div>Next Game</div><div class="score-line">'+pfx+' '+oppNm+'</div><div>'+stTxt+'</div>';
         }
       } else {
-        body='<div>No game today</div><div style="font-size:12px;color:var(--t3);margin-top:4px">Check the Hoops tab for full schedule</div>';
+        body='<div>No game today</div>';
       }
 
       html+='<div class="fav-card" data-team="'+id+'" data-i="'+idx+'">'
@@ -363,9 +363,9 @@ async function loadFavs() {
         +(record?'<div class="fav-rec">'+record+'</div>':'')
         +'</div></div><div class="fav-body">'+body+'</div></div>';
     });
-    $('favTeams').innerHTML=html||emptyHTML('—','No team data available');
+    $('favTeams').innerHTML=html||emptyHTML('—','No team info right now');
   } catch(e) {
-    $('favTeams').innerHTML=errHTML('—','Team updates unavailable','Will retry shortly');
+    $('favTeams').innerHTML=errHTML('—','Teams unavailable','Trying again shortly');
   }
 }
 
@@ -390,7 +390,7 @@ async function loadNews() {
     });
     $('homeNews').innerHTML=h;
   } catch(e) {
-    $('homeNews').innerHTML=errHTML('—','Headlines unavailable','Will retry shortly');
+    $('homeNews').innerHTML=errHTML('—','Headlines unavailable','Trying again shortly');
   }
 }
 
