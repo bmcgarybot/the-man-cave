@@ -108,7 +108,7 @@ async function initLocation() {
       var ad=rev.address||{};
       userCity=(ad.city||ad.town||ad.village||ad.county||'Your Location')+(ad.state?', '+ad.state:'');
     } catch(e){ userCity=userLat.toFixed(2)+'\u00b0, '+userLon.toFixed(2)+'\u00b0'; }
-    dot.className='loc-dot ok'; txt.textContent='\ud83d\udccd '+userCity;
+    dot.className='loc-dot ok'; txt.textContent=userCity;
     await resolveNWS(userLat,userLon);
   } catch(e) {
     dot.className='loc-dot err'; txt.textContent='Location denied \u00b7 Using '+DEFAULT_CITY;
@@ -156,11 +156,11 @@ async function loadWeather() {
     var hum=n.relativeHumidity?n.relativeHumidity.value+'%':'\u2014';
 
     $('weatherCard').innerHTML='<div class="weather-card">'
-      +'<div class="w-loc">\ud83d\udccd Weather for: '+userCity+'</div>'
+      +'<div class="w-loc">Weather for '+userCity+'</div>'
       +'<div class="w-main"><div class="w-left"><div class="w-icon">'+wxIcon(cond)+'</div>'
       +'<div><div class="w-temp">'+temp+'<span class="w-deg">\u00b0'+unit+'</span></div></div></div>'
       +'<div class="w-right"><div class="w-cond">'+cond+'</div>'
-      +'<div class="w-detail">\ud83d\udca8 '+wind+'<br>\ud83d\udca7 Humidity: '+hum+'</div></div></div></div>';
+      +'<div class="w-detail">Wind: '+wind+'<br>Humidity: '+hum+'</div></div></div></div>';
 
     // Forecast carousel
     var fh='<div class="forecast-scroll">';
@@ -216,9 +216,9 @@ async function loadFire() {
       .sort(function(a,b){return a.dist-b.dist;}).slice(0,10);
 
     if(!fires.length){
-      var safe='<div class="fire-safe"><div class="fire-safe-i">\u2705</div>'
+      var safe='<div class="fire-safe"><div class="fire-safe-i"><svg viewBox="0 0 24 24" width="40" height="40"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke="#22c55e" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>'
         +'<div class="fire-safe-t">All Clear</div>'
-        +'<div class="fire-safe-s">No active wildfires within 300 miles of '+userCity+'</div></div>';
+        +'<div class="fire-safe-s">No active wildfires within 300 miles</div></div>';
       $('fireCard').innerHTML=safe; $('alertsFire').innerHTML=safe;
     } else {
       var h='';
@@ -227,8 +227,8 @@ async function loadFire() {
         var pct=f.PercentContained!=null?f.PercentContained+'%':'N/A';
         var disc=f.FireDiscoveryDateTime?new Date(f.FireDiscoveryDateTime).toLocaleDateString():'';
         h+='<div class="fire-card" data-i="'+i+'">'
-          +'<div class="fire-hdr"><span>\ud83d\udd25</span><span class="fire-nm">'+f.IncidentName+'</span>'
-          +'<span class="fire-dist">'+f.dist.toFixed(0)+' mi</span></div>'
+          +'<div class="fire-hdr"><span class="fire-dot"></span><span class="fire-nm">'+f.IncidentName+'</span>'
+          +'<span class="fire-dist">'+f.dist.toFixed(0)+' mi away</span></div>'
           +'<div class="fire-stats"><span class="fire-stat"><strong>'+(ac?ac.toLocaleString():'\u2014')+'</strong> acres</span>'
           +'<span class="fire-stat"><strong>'+pct+'</strong> contained</span>'
           +(disc?'<span class="fire-stat">Started '+disc+'</span>':'')
