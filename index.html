@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#0d1117">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="The Man Cave">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" sizes="180x180" href="icons/icon-180.png">
+<link rel="stylesheet" href="styles.css">
+<title>The Man Cave</title>
+</head>
+<body>
+
+<!-- Splash Screen -->
+<div id="splash">
+  <div class="sp-icon">🏟️</div>
+  <div class="sp-title">The Man Cave</div>
+  <div class="sp-sub">Loading your dashboard…</div>
+  <div class="sp-bar"><div class="sp-fill" id="spFill"></div></div>
+</div>
+
+<!-- App Shell -->
+<div id="app" style="opacity:0;transition:opacity .4s">
+
+  <!-- Header -->
+  <header class="app-header">
+    <div class="hdr-top">
+      <div>
+        <div class="app-title">🏟️ The Man Cave</div>
+        <div class="hdr-sub" id="hdrSub">Loading…</div>
+      </div>
+      <div class="hdr-right">
+        <button class="refresh-btn" onclick="refreshAll()" id="refreshBtn">
+          <i class="r-icon">↻</i>
+        </button>
+        <div class="last-upd" id="lastUpd">—</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Content Area -->
+  <main class="content" id="contentArea">
+
+    <!-- ===== HOME ===== -->
+    <div class="page active" id="page-home">
+
+      <!-- Weather -->
+      <div class="sh"><span class="sh-i">🌤️</span><span class="sh-t">Weather</span></div>
+      <div class="loc-bar" id="locBar">
+        <span class="loc-dot wait" id="locDot"></span>
+        <span id="locText">Detecting your location…</span>
+      </div>
+      <div class="w-search">
+        <input type="text" id="wInput" placeholder="Search any city…" aria-label="Search weather">
+        <button onclick="searchWeather()" id="wBtn">Go</button>
+      </div>
+      <div id="weatherCard"><div class="skeleton skel-lg"></div></div>
+      <div id="forecastSection">
+        <div class="skel-row">
+          <div class="skeleton skel-chip"></div>
+          <div class="skeleton skel-chip"></div>
+          <div class="skeleton skel-chip"></div>
+          <div class="skeleton skel-chip"></div>
+          <div class="skeleton skel-chip"></div>
+        </div>
+      </div>
+
+      <!-- Fire Watch -->
+      <div class="sh"><span class="sh-i">🔥</span><span class="sh-t">Fire Watch</span></div>
+      <div id="fireCard"><div class="skeleton skel-card"></div></div>
+
+      <!-- Favorite Teams -->
+      <div class="sh"><span class="sh-i">⭐</span><span class="sh-t">Your Teams</span></div>
+      <div id="favTeams">
+        <div class="skeleton skel-lg"></div>
+        <div class="skeleton skel-lg"></div>
+        <div class="skeleton skel-lg"></div>
+      </div>
+
+      <!-- NBA Headlines -->
+      <div class="sh"><span class="sh-i">📰</span><span class="sh-t">NBA Headlines</span></div>
+      <div id="homeNews">
+        <div class="skeleton skel-sm"></div>
+        <div class="skeleton skel-sm"></div>
+        <div class="skeleton skel-sm"></div>
+      </div>
+
+    </div>
+
+    <!-- ===== HOOPS ===== -->
+    <div class="page" id="page-hoops">
+      <div class="sub-tabs">
+        <div class="s-tab active" onclick="subTab('hoops','nba',this)">NBA</div>
+        <div class="s-tab" onclick="subTab('hoops','ncaab',this)">College</div>
+      </div>
+      <div id="hoops-nba">
+        <div class="sh">
+          <span class="sh-i">🏀</span>
+          <span class="sh-t">NBA Scoreboard</span>
+          <span class="sh-badge" id="nbaCt">—</span>
+        </div>
+        <div id="nbaBoard">
+          <div class="skeleton skel-card"></div>
+          <div class="skeleton skel-card"></div>
+        </div>
+      </div>
+      <div id="hoops-ncaab" style="display:none">
+        <div class="sh">
+          <span class="sh-i">🏀</span>
+          <span class="sh-t">College Basketball</span>
+          <span class="sh-badge" id="ncaabCt">—</span>
+        </div>
+        <div id="ncaabBoard">
+          <div class="skeleton skel-card"></div>
+          <div class="skeleton skel-card"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== BASEBALL ===== -->
+    <div class="page" id="page-baseball">
+      <div class="sub-tabs">
+        <div class="s-tab active" onclick="subTab('baseball','mlb',this)">MLB</div>
+        <div class="s-tab" onclick="subTab('baseball','cbase',this)">College</div>
+      </div>
+      <div id="baseball-mlb">
+        <div class="sh">
+          <span class="sh-i">⚾</span>
+          <span class="sh-t">MLB Scoreboard</span>
+          <span class="sh-badge" id="mlbCt">—</span>
+        </div>
+        <div id="mlbBoard">
+          <div class="skeleton skel-card"></div>
+          <div class="skeleton skel-card"></div>
+        </div>
+      </div>
+      <div id="baseball-cbase" style="display:none">
+        <div class="sh">
+          <span class="sh-i">⚾</span>
+          <span class="sh-t">College Baseball</span>
+          <span class="sh-badge" id="cbaseCt">—</span>
+        </div>
+        <div id="cbaseBoard">
+          <div class="skeleton skel-card"></div>
+          <div class="skeleton skel-card"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== FOOTBALL ===== -->
+    <div class="page" id="page-football">
+      <div class="sub-tabs">
+        <div class="s-tab active" onclick="subTab('football','nfl',this)">NFL</div>
+        <div class="s-tab" onclick="subTab('football','cfb',this)">College</div>
+      </div>
+      <div id="football-nfl">
+        <div class="sh">
+          <span class="sh-i">🏈</span>
+          <span class="sh-t">NFL Scoreboard</span>
+          <span class="sh-badge" id="nflCt">—</span>
+        </div>
+        <div id="nflBoard">
+          <div class="skeleton skel-card"></div>
+          <div class="skeleton skel-card"></div>
+        </div>
+      </div>
+      <div id="football-cfb" style="display:none">
+        <div class="sh">
+          <span class="sh-i">🏈</span>
+          <span class="sh-t">College Football</span>
+          <span class="sh-badge" id="cfbCt">—</span>
+        </div>
+        <div id="cfbBoard">
+          <div class="skeleton skel-card"></div>
+          <div class="skeleton skel-card"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== ALERTS ===== -->
+    <div class="page" id="page-alerts">
+
+      <div class="sh"><span class="sh-i">🌡️</span><span class="sh-t">Extended Forecast</span></div>
+      <div id="extForecast">
+        <div class="skeleton skel-card"></div>
+        <div class="skeleton skel-card"></div>
+      </div>
+
+      <div class="sh"><span class="sh-i">🔥</span><span class="sh-t">Fire Watch Detail</span></div>
+      <div id="alertsFire"><div class="skeleton skel-card"></div></div>
+
+      <div class="sh"><span class="sh-i">📰</span><span class="sh-t">News &amp; Links</span></div>
+      <div id="alertsNews">
+        <div class="q-links">
+          <a class="q-link" href="https://www.espn.com" target="_blank" rel="noopener">🏟️ ESPN</a>
+          <a class="q-link" href="https://www.kdminer.com" target="_blank" rel="noopener">📰 Kingman Miner</a>
+          <a class="q-link" href="https://azdailysun.com" target="_blank" rel="noopener">☀️ AZ Daily Sun</a>
+          <a class="q-link" href="https://www.azcentral.com" target="_blank" rel="noopener">📰 AZ Central</a>
+          <a class="q-link" href="https://inciweb.wildfire.gov" target="_blank" rel="noopener">🔥 InciWeb Fires</a>
+          <a class="q-link" href="https://weather.gov" target="_blank" rel="noopener">🌤️ Weather.gov</a>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- Tab Bar -->
+  <nav class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab('home',this)" aria-label="Home">
+      <span class="t-icon">🏠</span><span>Home</span>
+    </button>
+    <button class="tab-btn" onclick="switchTab('hoops',this)" aria-label="Basketball">
+      <span class="t-icon">🏀</span><span>Hoops</span>
+    </button>
+    <button class="tab-btn" onclick="switchTab('baseball',this)" aria-label="Baseball">
+      <span class="t-icon">⚾</span><span>Baseball</span>
+    </button>
+    <button class="tab-btn" onclick="switchTab('football',this)" aria-label="Football">
+      <span class="t-icon">🏈</span><span>Football</span>
+    </button>
+    <button class="tab-btn" onclick="switchTab('alerts',this)" aria-label="Alerts">
+      <span class="t-icon">🔔</span><span>Alerts</span>
+    </button>
+  </nav>
+
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
