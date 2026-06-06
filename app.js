@@ -66,7 +66,7 @@ function haversine(la1,lo1,la2,lo2) {
 }
 function errHTML(ic,msg,sub){return '<div class="err-card"><div class="e-i">'+ic+'</div><div class="e-m">'+msg+'</div>'+(sub?'<div class="e-r">'+sub+'</div>':'')+'</div>';}
 function emptyHTML(ic,t,s){return '<div class="empty-card"><div class="em-i">'+ic+'</div><div class="em-t">'+t+'</div>'+(s?'<div class="em-s">'+s+'</div>':'')+'</div>';}
-function splashPct(p){ $('spFill').style.width = p+'%'; }
+function splashPct(p){ /* no-op */ }
 
 async function fetchJ(url,ms){
   var c=new AbortController();var t=setTimeout(function(){c.abort();},ms||10000);
@@ -438,46 +438,30 @@ async function refreshAll() {
 // BOOT
 // ===========================================================================
 async function boot() {
-  // Safety net: splash ALWAYS dismisses after 12s no matter what
-  var splashTimeout = setTimeout(dismissSplash, 12000);
-
   try {
-    splashPct(10);
     await initLocation();
-    splashPct(30);
-
     await Promise.allSettled([
-      loadWeather().then(function(){splashPct(50);}),
-      loadFire().then(function(){splashPct(55);}),
-      loadBoard('nba','nbaBoard','nbaCt').then(function(){splashPct(65);}),
+      loadWeather(),
+      loadFire(),
+      loadBoard('nba','nbaBoard','nbaCt'),
       loadBoard('ncaab','ncaabBoard','ncaabCt'),
-      loadBoard('mlb','mlbBoard','mlbCt').then(function(){splashPct(75);}),
+      loadBoard('mlb','mlbBoard','mlbCt'),
       loadBoard('cbase','cbaseBoard','cbaseCt'),
-      loadBoard('nfl','nflBoard','nflCt').then(function(){splashPct(85);}),
+      loadBoard('nfl','nflBoard','nflCt'),
       loadBoard('cfb','cfbBoard','cfbCt'),
-      loadNews().then(function(){splashPct(90);})
+      loadNews()
     ]);
     await loadFavs();
-    splashPct(100);
-  } catch(e) {
-    // Swallow — splash will dismiss regardless
-  }
-
-  clearTimeout(splashTimeout);
+  } catch(e) {}
   dismissSplash();
   startAutoRefresh();
 }
 
 function dismissSplash() {
-  var sp = $('splash');
-  if (!sp) return;
   var now = new Date();
   $('hdrSub').textContent = userCity + ' \u00b7 ' + fmtDate(now);
   $('lastUpd').innerHTML = 'Updated ' + now.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})
     + ' \u00b7 <span class="countdown" id="cd">2:00</span>';
-  sp.classList.add('bye');
-  $('app').style.opacity = '1';
-  setTimeout(function(){ if(sp.parentNode) sp.parentNode.removeChild(sp); }, 700);
 }
 
 function startAutoRefresh() {
