@@ -3,6 +3,10 @@
    ESPN + NWS + NIFC/ArcGIS + Geolocation + Nominatim
    ========================================================================== */
 
+// Global error handler — never let JS errors kill the app
+window.onerror = function(){ var sp=document.getElementById('splash'); if(sp){sp.classList.add('bye');document.getElementById('app').style.opacity='1';} };
+window.addEventListener('unhandledrejection', function(){ var sp=document.getElementById('splash'); if(sp){sp.classList.add('bye');document.getElementById('app').style.opacity='1';} });
+
 // ---- Configuration ----
 const FAV_IDS = new Set([12, 21, 9]);
 const FAV_NAMES = { 12:'LA Clippers', 21:'Phoenix Suns', 9:'Golden State Warriors' };
@@ -65,8 +69,8 @@ function emptyHTML(ic,t,s){return '<div class="empty-card"><div class="em-i">'+i
 function splashPct(p){ $('spFill').style.width = p+'%'; }
 
 async function fetchJ(url,ms){
-  const c=new AbortController();const t=setTimeout(()=>c.abort(),ms||10000);
-  try{const r=await fetch(url,{signal:c.signal});if(!r.ok)throw new Error(r.status);return await r.json();}
+  var c=new AbortController();var t=setTimeout(function(){c.abort();},ms||10000);
+  try{var r=await fetch(url,{signal:c.signal});if(!r.ok)throw new Error(r.status);return await r.json();}
   finally{clearTimeout(t);}
 }
 
@@ -100,7 +104,7 @@ async function initLocation() {
   }
   try {
     var pos = await new Promise(function(ok,fail){
-      navigator.geolocation.getCurrentPosition(ok,fail,{timeout:8000,enableHighAccuracy:false});
+      navigator.geolocation.getCurrentPosition(ok,fail,{timeout:5000,enableHighAccuracy:false});
     });
     userLat=pos.coords.latitude; userLon=pos.coords.longitude;
     try {
@@ -434,45 +438,57 @@ async function refreshAll() {
 // BOOT
 // ===========================================================================
 async function boot() {
-  splashPct(10);
-  await initLocation();
-  splashPct(30);
+  // Safety net: splash ALWAYS dismisses after 12s no matter what
+  var splashTimeout = setTimeout(dismissSplash, 12000);
 
-  await Promise.allSettled([
-    loadWeather().then(function(){splashPct(50);}),
-    loadFire().then(function(){splashPct(55);}),
-    loadBoard('nba','nbaBoard','nbaCt').then(function(){splashPct(65);}),
-    loadBoard('ncaab','ncaabBoard','ncaabCt'),
-    loadBoard('mlb','mlbBoard','mlbCt').then(function(){splashPct(75);}),
-    loadBoard('cbase','cbaseBoard','cbaseCt'),
-    loadBoard('nfl','nflBoard','nflCt').then(function(){splashPct(85);}),
-    loadBoard('cfb','cfbBoard','cfbCt'),
-    loadNews().then(function(){splashPct(90);})
-  ]);
-  await loadFavs();
-  splashPct(100);
+  try {
+    splashPct(10);
+    await initLocation();
+    splashPct(30);
 
-  var now=new Date();
-  $('hdrSub').textContent=userCity+' \u00b7 '+fmtDate(now);
-  $('lastUpd').innerHTML='Updated '+now.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})
-    +' \u00b7 <span class="countdown" id="cd">2:00</span>';
+    await Promise.allSettled([
+      loadWeather().then(function(){splashPct(50);}),
+      loadFire().then(function(){splashPct(55);}),
+      loadBoard('nba','nbaBoard','nbaCt').then(function(){splashPct(65);}),
+      loadBoard('ncaab','ncaabBoard','ncaabCt'),
+      loadBoard('mlb','mlbBoard','mlbCt').then(function(){splashPct(75);}),
+      loadBoard('cbase','cbaseBoard','cbaseCt'),
+      loadBoard('nfl','nflBoard','nflCt').then(function(){splashPct(85);}),
+      loadBoard('cfb','cfbBoard','cfbCt'),
+      loadNews().then(function(){splashPct(90);})
+    ]);
+    await loadFavs();
+    splashPct(100);
+  } catch(e) {
+    // Swallow — splash will dismiss regardless
+  }
 
-  // Dismiss splash
-  setTimeout(function(){
-    $('splash').classList.add('bye');
-    $('app').style.opacity='1';
-    setTimeout(function(){$('splash').remove();},700);
-  },400);
+  clearTimeout(splashTimeout);
+  dismissSplash();
+  startAutoRefresh();
+}
 
-  // Start auto-refresh
-  cdVal=120;
-  cdTimer=setInterval(function(){
+function dismissSplash() {
+  var sp = $('splash');
+  if (!sp) return;
+  var now = new Date();
+  $('hdrSub').textContent = userCity + ' \u00b7 ' + fmtDate(now);
+  $('lastUpd').innerHTML = 'Updated ' + now.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})
+    + ' \u00b7 <span class="countdown" id="cd">2:00</span>';
+  sp.classList.add('bye');
+  $('app').style.opacity = '1';
+  setTimeout(function(){ if(sp.parentNode) sp.parentNode.removeChild(sp); }, 700);
+}
+
+function startAutoRefresh() {
+  cdVal = 120;
+  cdTimer = setInterval(function(){
     cdVal--;
-    var el=$('cd');
-    if(el)el.textContent=Math.floor(cdVal/60)+':'+String(cdVal%60).padStart(2,'0');
-    if(cdVal<=0)clearInterval(cdTimer);
-  },1000);
-  refreshTimer=setTimeout(refreshAll,REFRESH_MS);
+    var el = $('cd');
+    if(el) el.textContent = Math.floor(cdVal/60) + ':' + String(cdVal%60).padStart(2,'0');
+    if(cdVal <= 0) clearInterval(cdTimer);
+  }, 1000);
+  refreshTimer = setTimeout(refreshAll, REFRESH_MS);
 }
 
 // Service Worker Registration
