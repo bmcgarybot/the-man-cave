@@ -207,7 +207,37 @@ body{height:100%;height:-webkit-fill-available;overflow:hidden;background:var(--
 .wk-logo{width:18px;height:18px;border-radius:2px;flex:0 0 18px}
 .wk-at{font-size:11px;color:var(--t3);font-weight:500;flex:0 0 auto;text-align:center;min-width:20px}
 .wk-score{font-size:12px;font-weight:700;color:var(--t1);white-space:nowrap}
-.wk-time{font-size:11px;color:var(--t3);text-align:right;flex:0 0 auto;white-space:nowrap;display:flex;align-items:center;gap:4px}
+.wk-meta{display:flex;flex-direction:column;align-items:flex-end;flex:0 0 auto;gap:2px}
+.wk-time{font-size:11px;color:var(--t3);text-align:right;white-space:nowrap;display:flex;align-items:center;gap:4px}
 .wk-time-live{color:var(--red);font-weight:600}
+.wk-bc{font-size:9px;color:var(--acc);font-weight:600;text-transform:uppercase;letter-spacing:.3px;white-space:nowrap;max-width:80px;overflow:hidden;text-overflow:ellipsis}
+
+/* Detailed weather text */
+.w-detailed{margin-top:8px;padding:8px 10px;font-size:12px;color:var(--t2);line-height:1.5;background:rgba(255,255,255,.03);border-radius:var(--rs);border-left:3px solid var(--acc)}
+.w-detail em{color:var(--acc);font-style:normal;font-weight:500}
+
+/* Hourly forecast */
+.hourly-scroll{display:flex;overflow-x:auto;gap:6px;padding:8px 0;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.hourly-scroll::-webkit-scrollbar{display:none}
+.hr-item{flex:0 0 60px;background:var(--card);border-radius:var(--rs);padding:8px 4px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:2px}
+.hr-time{font-size:10px;font-weight:600;color:var(--t2)}
+.hr-icon{font-size:18px;line-height:1}
+.hr-temp{font-size:14px;font-weight:700;color:var(--t1)}
+.hr-precip{font-size:9px;color:var(--acc)}
+.hr-wind{font-size:8px;color:var(--t3);white-space:nowrap}
+
+/* Forecast precipitation */
+.fc-precip{font-size:9px;color:var(--acc);margin-top:2px}
+
+/* Extended forecast stats */
+.ext-stats{font-size:11px;color:var(--t3);padding:2px 0 4px;display:flex;flex-wrap:wrap}
+
+/* Fire improvements */
+.fire-near{border-left:3px solid var(--red);padding-left:9px}
+.fire-dot-near{background:var(--red)!important;box-shadow:0 0 6px rgba(239,68,68,.5)}
+.fire-more{text-align:center;padding:10px;font-size:12px;font-weight:600;color:var(--acc);cursor:pointer;border-radius:var(--rs);background:var(--card);margin-top:4px}
+.fire-more:active{background:var(--card-h)}
+.fire-summary{font-size:12px;color:var(--t2);padding:8px 10px;background:var(--card);border-radius:var(--rs);margin-bottom:8px;text-align:center}
+.fire-section-hdr{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--t3);padding:10px 4px 4px;border-bottom:1px solid var(--bdr);margin:8px 0 4px}
 
 [data-i="0"]{animation-delay:.03s}[data-i="1"]{animation-delay:.07s}[data-i="2"]{animation-delay:.11s}[data-i="3"]{animation-delay:.15s}[data-i="4"]{animation-delay:.19s}[data-i="5"]{animation-delay:.23s}[data-i="6"]{animation-delay:.27s}[data-i="7"]{animation-delay:.31s}[data-i="8"]{animation-delay:.35s}[data-i="9"]{animation-delay:.39s}

@@ -158,47 +158,88 @@ async function loadWeather() {
     var n=pp[0], temp=n.temperature, unit=n.temperatureUnit||'F';
     var cond=n.shortForecast, wind=n.windSpeed+' '+n.windDirection;
     var hum=n.relativeHumidity?n.relativeHumidity.value+'%':'\u2014';
+    var precip=n.probabilityOfPrecipitation?n.probabilityOfPrecipitation.value:null;
+    var dew=n.dewpoint?Math.round(n.dewpoint.value*9/5+32)+'\u00b0F':'\u2014';
+    var feelsLike='';
+    if(temp>=80&&hum!=='\u2014'){var h2=parseFloat(hum);if(h2>40)feelsLike='Feels hotter due to humidity';}
+    else if(temp<=50&&n.windSpeed){var ws=parseFloat(n.windSpeed);if(ws>3)feelsLike='Wind chill in effect';}
+    var detailTxt=n.detailedForecast||'';
 
     $('weatherCard').innerHTML='<div class="weather-card">'
-      +'<div class="w-loc">Weather for '+userCity+'</div>'
+      +'<div class="w-loc">'+userCity+'</div>'
       +'<div class="w-main"><div class="w-left"><div class="w-icon">'+wxIcon(cond)+'</div>'
       +'<div><div class="w-temp">'+temp+'<span class="w-deg">\u00b0'+unit+'</span></div></div></div>'
       +'<div class="w-right"><div class="w-cond">'+cond+'</div>'
-      +'<div class="w-detail">Wind: '+wind+'<br>Humidity: '+hum+'</div></div></div></div>';
+      +'<div class="w-detail">'
+      +'Wind: '+wind+'<br>Humidity: '+hum+'<br>Dew Point: '+dew
+      +(precip!=null?'<br>Rain: '+precip+'%':'')
+      +(feelsLike?'<br><em>'+feelsLike+'</em>':'')
+      +'</div></div></div>'
+      +(detailTxt?'<div class="w-detailed">'+detailTxt+'</div>':'')
+      +'</div>';
 
-    // Forecast carousel
     var fh='<div class="forecast-scroll">';
     for(var i=0;i<pp.length&&i<14;i++){
       var p=pp[i];
       if(p.isDaytime){
         var night=pp[i+1], lo=night?night.temperature:'\u2014';
         var dl=p.name.length>8?p.name.substring(0,6)+'\u2026':p.name;
+        var prc=p.probabilityOfPrecipitation?p.probabilityOfPrecipitation.value:null;
         fh+='<div class="fc-item"><div class="fc-day">'+dl+'</div>'
           +'<div class="fc-icon">'+wxIcon(p.shortForecast)+'</div>'
           +'<div class="fc-temp">'+p.temperature+'\u00b0</div>'
-          +'<div class="fc-lo">'+lo+'\u00b0</div></div>';
+          +'<div class="fc-lo">'+lo+'\u00b0</div>'
+          +(prc!=null&&prc>0?'<div class="fc-precip">\ud83d\udca7'+prc+'%</div>':'')
+          +'</div>';
       }
     }
     fh+='</div>';
     $('forecastSection').innerHTML=fh;
 
-    // Extended forecast for alerts page
     var eh='';
     pp.forEach(function(p,i){
-      if(i>9)return;
-      eh+='<div class="ext-fc" data-i="'+i+'">'
+      if(i>13)return;
+      var prc2=p.probabilityOfPrecipitation?p.probabilityOfPrecipitation.value:null;
+      var hum2=p.relativeHumidity?p.relativeHumidity.value+'%':'';
+      eh+='<div class="ext-fc" data-i="'+(i%10)+'">'
         +'<div class="ext-hdr"><span class="ext-icon">'+wxIcon(p.shortForecast)+'</span>'
         +'<span class="ext-day">'+p.name+'</span>'
         +'<span class="ext-temp">'+p.temperature+'\u00b0'+p.temperatureUnit+'</span></div>'
+        +'<div class="ext-stats">'
+        +'<span>Wind: '+p.windSpeed+' '+p.windDirection+'</span>'
+        +(hum2?'<span> \u00b7 Humidity: '+hum2+'</span>':'')
+        +(prc2!=null?'<span> \u00b7 Rain: '+prc2+'%</span>':'')
+        +'</div>'
         +'<div class="ext-body">'+p.detailedForecast+'</div></div>';
     });
-    $('extForecast').innerHTML=eh||emptyHTML('—','No forecast data');
+    $('extForecast').innerHTML=eh||emptyHTML('\u2014','No forecast data');
+
+    if(nwsHourlyUrl){
+      try{
+        var hr=await fetchJ(nwsHourlyUrl);
+        var hp=hr.properties.periods||[];
+        var hh='<div class="sh" style="margin-top:12px"><svg class="sh-icon" viewBox="0 0 24 24"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg><span class="sh-t">Hourly</span></div>';
+        hh+='<div class="hourly-scroll">';
+        for(var hi=0;hi<hp.length&&hi<12;hi++){
+          var h3=hp[hi];
+          var hTime=new Date(h3.startTime).toLocaleTimeString('en-US',{hour:'numeric'});
+          var hPrc=h3.probabilityOfPrecipitation?h3.probabilityOfPrecipitation.value:null;
+          hh+='<div class="hr-item"><div class="hr-time">'+hTime+'</div>'
+            +'<div class="hr-icon">'+wxIcon(h3.shortForecast)+'</div>'
+            +'<div class="hr-temp">'+h3.temperature+'\u00b0</div>'
+            +(hPrc!=null&&hPrc>0?'<div class="hr-precip">\ud83d\udca7'+hPrc+'%</div>':'')
+            +'<div class="hr-wind">'+h3.windSpeed+'</div></div>';
+        }
+        hh+='</div>';
+        $('forecastSection').innerHTML+= hh;
+      }catch(e){}
+    }
   } catch(e) {
-    $('weatherCard').innerHTML=errHTML('—',
+    $('weatherCard').innerHTML=errHTML('\u2014',
       nwsForecastUrl?'Weather unavailable right now':'Weather only works for US locations',
       'Trying again shortly');
     $('forecastSection').innerHTML='';
-    $('extForecast').innerHTML=errHTML('—','Forecast unavailable right now','Try a US city');
+    $('extForecast').innerHTML=errHTML('\u2014','Forecast unavailable right now','Try a US city');
   }
 }
 
@@ -206,39 +247,79 @@ async function loadWeather() {
 // FIRE WATCH
 // ===========================================================================
 async function loadFire() {
-  var rng=4;
-  var bbox=JSON.stringify({xmin:userLon-rng,ymin:userLat-rng,xmax:userLon+rng,ymax:userLat+rng});
   try {
-    var url=FIRE_EP+'?where=1%3D1&outFields=IncidentName,IncidentSize,PercentContained,POOLatitude,POOLongitude,IncidentTypeCategory,FireDiscoveryDateTime,DailyAcres'
-      +'&geometry='+encodeURIComponent(bbox)+'&geometryType=esriGeometryEnvelope&inSR=4326&spatialRel=esriSpatialRelIntersects&f=json&resultRecordCount=50';
-    var data=await fetchJ(url,12000);
+    // Fetch ALL active fires nationwide — like Watch Duty
+    var url=FIRE_EP+'?where=1%3D1&outFields=IncidentName,IncidentSize,PercentContained,POOLatitude,POOLongitude,POOState,IncidentTypeCategory,FireDiscoveryDateTime,DailyAcres'
+      +'&f=json&resultRecordCount=200&orderByFields=DailyAcres+DESC';
+    var data=await fetchJ(url,15000);
     var fires=(data.features||[]).map(function(f){
       var a=f.attributes, lat=a.POOLatitude||(f.geometry&&f.geometry.y), lon=a.POOLongitude||(f.geometry&&f.geometry.x);
-      var dist=(lat&&lon)?haversine(userLat,userLon,lat,lon):9999;
-      return Object.assign({},a,{dist:dist});
-    }).filter(function(f){return f.IncidentName&&f.dist<300;})
-      .sort(function(a,b){return a.dist-b.dist;}).slice(0,10);
+      var dist=(lat&&lon)?haversine(userLat,userLon,lat,lon):99999;
+      return Object.assign({},a,{dist:dist,lat:lat,lon:lon});
+    }).filter(function(f){return f.IncidentName;})
+      .sort(function(a,b){return a.dist-b.dist;});
+    // Nearby fires first (within 200mi), then biggest fires nationwide
+    var nearby=fires.filter(function(f){return f.dist<200;});
+    var big=fires.filter(function(f){return f.dist>=200&&(f.DailyAcres||f.IncidentSize||0)>=100;}).sort(function(a,b){return (b.DailyAcres||b.IncidentSize||0)-(a.DailyAcres||a.IncidentSize||0);}).slice(0,25);
+    fires=nearby.concat(big);
 
     if(!fires.length){
       var safe='<div class="fire-safe"><div class="fire-safe-i"><svg viewBox="0 0 24 24" width="40" height="40"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke="#22c55e" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>'
         +'<div class="fire-safe-t">All Clear</div>'
-        +'<div class="fire-safe-s">No active wildfires within 300 miles</div></div>';
+        +'<div class="fire-safe-s">No active wildfires reported</div></div>';
       $('fireCard').innerHTML=safe; $('alertsFire').innerHTML=safe;
     } else {
-      var h='';
-      fires.forEach(function(f,i){
+      // Home page: top 5 summary
+      var hShort='';
+      fires.slice(0,5).forEach(function(f,i){
         var ac=f.DailyAcres||f.IncidentSize||0;
         var pct=f.PercentContained!=null?f.PercentContained+'%':'N/A';
-        var disc=f.FireDiscoveryDateTime?new Date(f.FireDiscoveryDateTime).toLocaleDateString():'';
-        h+='<div class="fire-card" data-i="'+i+'">'
-          +'<div class="fire-hdr"><span class="fire-dot"></span><span class="fire-nm">'+f.IncidentName+'</span>'
-          +'<span class="fire-dist">'+f.dist.toFixed(0)+' mi away</span></div>'
+        var st=f.POOState||'';
+        var isNear=f.dist<200;
+        hShort+='<div class="fire-card'+(isNear?' fire-near':'')+'" data-i="'+i+'">'
+          +'<div class="fire-hdr"><span class="fire-dot'+(isNear?' fire-dot-near':'')+'"></span><span class="fire-nm">'+f.IncidentName+'</span>'
+          +'<span class="fire-dist">'+(isNear?f.dist.toFixed(0)+' mi':st)+'</span></div>'
           +'<div class="fire-stats"><span class="fire-stat"><strong>'+(ac?ac.toLocaleString():'\u2014')+'</strong> acres</span>'
           +'<span class="fire-stat"><strong>'+pct+'</strong> contained</span>'
-          +(disc?'<span class="fire-stat">Started '+disc+'</span>':'')
           +'</div></div>';
       });
-      $('fireCard').innerHTML=h; $('alertsFire').innerHTML=h;
+      hShort+='<div class="fire-more" onclick="switchTab(\u0027alerts\u0027,document.querySelectorAll(\u0027.tab-btn\u0027)[4])">View all '+fires.length+' fires \u2192</div>';
+      $('fireCard').innerHTML=hShort;
+
+      // Alerts page: full detailed list
+      var hFull='<div class="fire-summary"><strong>'+fires.length+'</strong> active fires tracked \u00b7 <strong>'+nearby.length+'</strong> within 200 miles</div>';
+      if(nearby.length>0){
+        hFull+='<div class="fire-section-hdr">Near You (within 200 mi)</div>';
+        nearby.forEach(function(f,i){
+          var ac=f.DailyAcres||f.IncidentSize||0;
+          var pct=f.PercentContained!=null?f.PercentContained+'%':'N/A';
+          var disc=f.FireDiscoveryDateTime?new Date(f.FireDiscoveryDateTime).toLocaleDateString():'';
+          hFull+='<div class="fire-card fire-near" data-i="'+(i%10)+'">'
+            +'<div class="fire-hdr"><span class="fire-dot fire-dot-near"></span><span class="fire-nm">'+f.IncidentName+'</span>'
+            +'<span class="fire-dist">'+f.dist.toFixed(0)+' mi</span></div>'
+            +'<div class="fire-stats"><span class="fire-stat"><strong>'+(ac?ac.toLocaleString():'\u2014')+'</strong> acres</span>'
+            +'<span class="fire-stat"><strong>'+pct+'</strong> contained</span>'
+            +(disc?'<span class="fire-stat">Since '+disc+'</span>':'')
+            +'</div></div>';
+        });
+      }
+      if(big.length>0){
+        hFull+='<div class="fire-section-hdr">Major Fires Nationwide</div>';
+        big.forEach(function(f,i){
+          var ac=f.DailyAcres||f.IncidentSize||0;
+          var pct=f.PercentContained!=null?f.PercentContained+'%':'N/A';
+          var disc=f.FireDiscoveryDateTime?new Date(f.FireDiscoveryDateTime).toLocaleDateString():'';
+          var st=f.POOState||'';
+          hFull+='<div class="fire-card" data-i="'+(i%10)+'">'
+            +'<div class="fire-hdr"><span class="fire-dot"></span><span class="fire-nm">'+f.IncidentName+'</span>'
+            +'<span class="fire-dist">'+st+(f.dist<99999?' \u00b7 '+f.dist.toFixed(0)+' mi':'')+'</span></div>'
+            +'<div class="fire-stats"><span class="fire-stat"><strong>'+(ac?ac.toLocaleString():'\u2014')+'</strong> acres</span>'
+            +'<span class="fire-stat"><strong>'+pct+'</strong> contained</span>'
+            +(disc?'<span class="fire-stat">Since '+disc+'</span>':'')
+            +'</div></div>';
+        });
+      }
+      $('alertsFire').innerHTML=hFull;
     }
   } catch(e) {
     var fb=errHTML('—','Fire data unavailable right now','Trying again shortly');
@@ -431,12 +512,16 @@ async function loadWeeklyOutlook() {
                   oppTeam = t;
                 }
               });
-              // For NBA, only show fav team games. For MLB/NFL show all.
-              if (sport === 'nba' && !isFavGame) return;
+              // Show all games for all sports
               var home = teams.find(function(t) { return t.homeAway === 'home'; }) || teams[0];
               var away = teams.find(function(t) { return t.homeAway === 'away'; }) || teams[1];
               var st = ev.status && ev.status.type;
               var gameDate = new Date(ev.date || comp.date);
+              var bcast = comp.broadcasts ? comp.broadcasts.flatMap(function(b){ return b.names||[]; }) : [];
+              var geoBcast = comp.geoBroadcasts || [];
+              geoBcast.forEach(function(gb) {
+                if (gb.media && gb.media.shortName && bcast.indexOf(gb.media.shortName) === -1) bcast.push(gb.media.shortName);
+              });
               allGames.push({
                 sport: sport,
                 date: gameDate,
@@ -447,7 +532,8 @@ async function loadWeeklyOutlook() {
                 status: st,
                 statusText: (st && (st.shortDetail || st.detail)) || '',
                 isFav: isFavGame,
-                name: ev.shortName || ev.name || ''
+                name: ev.shortName || ev.name || '',
+                broadcast: bcast.slice(0, 3).join(', ')
               });
             });
           })
@@ -518,7 +604,10 @@ async function loadWeeklyOutlook() {
       html += '<span class="wk-at">' + (isLive || isFinal ? scoreHtml : '@') + '</span>';
       html += '<div class="wk-team">' + (homeLogo ? '<img class="wk-logo" src="' + homeLogo + '" alt="" loading="lazy" onerror="this.style.display=\'none\'">' : '') + '<span>' + homeName + '</span></div>';
       html += '</div>';
+      html += '<div class="wk-meta">';
       html += '<div class="wk-time' + (isLive ? ' wk-time-live' : '') + '">' + (isLive ? '<span class="live-dot"></span>' : '') + timeStr + '</div>';
+      if (g.broadcast) html += '<div class="wk-bc">' + g.broadcast + '</div>';
+      html += '</div>';
       html += '</div>';
     });
     html += '</div>';
