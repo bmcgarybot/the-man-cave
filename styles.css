@@ -189,4 +189,25 @@ body{height:100%;height:-webkit-fill-available;overflow:hidden;background:var(--
 .sp-fill{height:100%;width:0%;background:linear-gradient(135deg,var(--acc),var(--acc2));border-radius:3px;transition:width .4s ease}
 
 @media(min-width:768px){.content{max-width:600px;margin:0 auto}}
+
+/* Weekly Outlook */
+.wk-day{margin-bottom:12px}
+.wk-today .wk-day-hdr{color:var(--acc)}
+.wk-day-hdr{display:flex;justify-content:space-between;align-items:center;font-size:13px;font-weight:700;color:var(--t2);padding:6px 4px 4px;border-bottom:1px solid var(--bdr);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px}
+.wk-day-ct{font-size:11px;font-weight:400;color:var(--t3)}
+.wk-game{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:var(--rs);background:var(--card);margin-bottom:4px;transition:background .2s}
+.wk-game:active{background:var(--card-h)}
+.wk-fav{border-left:3px solid var(--acc);padding-left:7px}
+.wk-live{background:rgba(239,68,68,.08);border-left:3px solid var(--red);padding-left:7px}
+.wk-sport{flex:0 0 20px;display:flex;align-items:center;justify-content:center}
+.wk-sport-icon{width:18px;height:18px;color:var(--t3)}
+.wk-teams{flex:1;display:flex;align-items:center;gap:6px;min-width:0}
+.wk-team{display:flex;align-items:center;gap:4px;min-width:0}
+.wk-team span{font-size:13px;font-weight:600;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wk-logo{width:18px;height:18px;border-radius:2px;flex:0 0 18px}
+.wk-at{font-size:11px;color:var(--t3);font-weight:500;flex:0 0 auto;text-align:center;min-width:20px}
+.wk-score{font-size:12px;font-weight:700;color:var(--t1);white-space:nowrap}
+.wk-time{font-size:11px;color:var(--t3);text-align:right;flex:0 0 auto;white-space:nowrap;display:flex;align-items:center;gap:4px}
+.wk-time-live{color:var(--red);font-weight:600}
+
 [data-i="0"]{animation-delay:.03s}[data-i="1"]{animation-delay:.07s}[data-i="2"]{animation-delay:.11s}[data-i="3"]{animation-delay:.15s}[data-i="4"]{animation-delay:.19s}[data-i="5"]{animation-delay:.23s}[data-i="6"]{animation-delay:.27s}[data-i="7"]{animation-delay:.31s}[data-i="8"]{animation-delay:.35s}[data-i="9"]{animation-delay:.39s}

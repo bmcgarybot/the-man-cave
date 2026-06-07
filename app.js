@@ -374,6 +374,160 @@ async function loadFavs() {
 }
 
 // ===========================================================================
+// WEEKLY OUTLOOK — Upcoming games for favorite teams + all sports
+// ===========================================================================
+const SCHEDULE_EP = {
+  nba: ESPN_BASE + '/basketball/nba/scoreboard?dates=',
+  mlb: ESPN_BASE + '/baseball/mlb/scoreboard?dates=',
+  nfl: ESPN_BASE + '/football/nfl/scoreboard?dates=',
+};
+
+function getWeekDates() {
+  var dates = [];
+  var now = new Date();
+  for (var i = 0; i < 7; i++) {
+    var d = new Date(now);
+    d.setDate(d.getDate() + i);
+    var yyyy = d.getFullYear();
+    var mm = String(d.getMonth() + 1).padStart(2, '0');
+    var dd = String(d.getDate()).padStart(2, '0');
+    dates.push({ str: yyyy + mm + dd, date: d, label: d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) });
+  }
+  return dates;
+}
+
+function sportIcon(sport) {
+  if (sport === 'nba') return '<svg class="wk-sport-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none"/><path d="M4.93 4.93c4.08 2.38 6.2 5.73 6.37 10.07M19.07 4.93c-4.08 2.38-6.2 5.73-6.37 10.07M2 12h20" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>';
+  if (sport === 'mlb') return '<svg class="wk-sport-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none"/><path d="M8 2.5c-1 2.5-1 5.5 0 8s1 5.5 0 8M16 21.5c1-2.5 1-5.5 0-8s-1-5.5 0-8" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg>';
+  if (sport === 'nfl') return '<svg class="wk-sport-icon" viewBox="0 0 24 24"><ellipse cx="12" cy="12" rx="10" ry="7" transform="rotate(-45 12 12)" stroke="currentColor" stroke-width="2" fill="none"/><path d="M7.5 7.5l9 9" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg>';
+  return '';
+}
+
+async function loadWeeklyOutlook() {
+  var weekDates = getWeekDates();
+  var allGames = [];
+
+  // Fetch each sport's schedule for the week
+  var sportKeys = Object.keys(SCHEDULE_EP);
+  var fetches = [];
+  sportKeys.forEach(function(sport) {
+    weekDates.forEach(function(wd) {
+      fetches.push(
+        fetchJ(SCHEDULE_EP[sport] + wd.str, 8000)
+          .then(function(data) {
+            var events = data.events || [];
+            events.forEach(function(ev) {
+              var comp = ev.competitions && ev.competitions[0];
+              if (!comp) return;
+              var teams = comp.competitors || [];
+              // Check if any favorite team is playing (for NBA) or include all games for other sports
+              var isFavGame = false;
+              var favTeam = null, oppTeam = null;
+              teams.forEach(function(t) {
+                if (FAV_IDS.has(Number(t.team && t.team.id))) {
+                  isFavGame = true;
+                  favTeam = t;
+                } else {
+                  oppTeam = t;
+                }
+              });
+              // For NBA, only show fav team games. For MLB/NFL show all.
+              if (sport === 'nba' && !isFavGame) return;
+              var home = teams.find(function(t) { return t.homeAway === 'home'; }) || teams[0];
+              var away = teams.find(function(t) { return t.homeAway === 'away'; }) || teams[1];
+              var st = ev.status && ev.status.type;
+              var gameDate = new Date(ev.date || comp.date);
+              allGames.push({
+                sport: sport,
+                date: gameDate,
+                dateStr: wd.str,
+                dateLabel: wd.label,
+                home: home,
+                away: away,
+                status: st,
+                statusText: (st && (st.shortDetail || st.detail)) || '',
+                isFav: isFavGame,
+                name: ev.shortName || ev.name || ''
+              });
+            });
+          })
+          .catch(function() { /* skip failed fetches */ })
+      );
+    });
+  });
+
+  await Promise.allSettled(fetches);
+
+  // Sort by date
+  allGames.sort(function(a, b) { return a.date - b.date; });
+
+  // Remove duplicates (same teams, same date)
+  var seen = new Set();
+  allGames = allGames.filter(function(g) {
+    var key = g.sport + g.dateStr + (g.home.team && g.home.team.id) + (g.away.team && g.away.team.id);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+
+  if (!allGames.length) {
+    $('weeklyOutlook').innerHTML = emptyHTML('\u2014', 'No upcoming games this week', 'Check back later');
+    return;
+  }
+
+  // Group by day
+  var grouped = {};
+  allGames.forEach(function(g) {
+    if (!grouped[g.dateStr]) grouped[g.dateStr] = { label: g.dateLabel, games: [] };
+    grouped[g.dateStr].games.push(g);
+  });
+
+  var html = '';
+  Object.keys(grouped).sort().forEach(function(ds) {
+    var day = grouped[ds];
+    var isToday = ds === weekDates[0].str;
+    html += '<div class="wk-day' + (isToday ? ' wk-today' : '') + '">';
+    html += '<div class="wk-day-hdr">' + (isToday ? 'Today' : day.label) + '<span class="wk-day-ct">' + day.games.length + ' game' + (day.games.length > 1 ? 's' : '') + '</span></div>';
+    day.games.forEach(function(g) {
+      var homeName = (g.home.team && (g.home.team.shortDisplayName || g.home.team.abbreviation || g.home.team.name)) || '?';
+      var awayName = (g.away.team && (g.away.team.shortDisplayName || g.away.team.abbreviation || g.away.team.name)) || '?';
+      var homeLogo = (g.home.team && g.home.team.logo) || '';
+      var awayLogo = (g.away.team && g.away.team.logo) || '';
+      var stState = g.status && g.status.state;
+      var isLive = stState === 'in';
+      var isFinal = stState === 'post';
+      var isPre = stState === 'pre';
+      var timeStr = '';
+      if (isPre) {
+        timeStr = g.date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+      } else {
+        timeStr = g.statusText;
+      }
+
+      var scoreHtml = '';
+      if (isLive || isFinal) {
+        var hScore = g.home.score || '0';
+        var aScore = g.away.score || '0';
+        scoreHtml = '<span class="wk-score">' + aScore + ' - ' + hScore + '</span>';
+      }
+
+      html += '<div class="wk-game' + (g.isFav ? ' wk-fav' : '') + (isLive ? ' wk-live' : '') + '">';
+      html += '<div class="wk-sport">' + sportIcon(g.sport) + '</div>';
+      html += '<div class="wk-teams">';
+      html += '<div class="wk-team">' + (awayLogo ? '<img class="wk-logo" src="' + awayLogo + '" alt="" loading="lazy" onerror="this.style.display=\'none\'">' : '') + '<span>' + awayName + '</span></div>';
+      html += '<span class="wk-at">' + (isLive || isFinal ? scoreHtml : '@') + '</span>';
+      html += '<div class="wk-team">' + (homeLogo ? '<img class="wk-logo" src="' + homeLogo + '" alt="" loading="lazy" onerror="this.style.display=\'none\'">' : '') + '<span>' + homeName + '</span></div>';
+      html += '</div>';
+      html += '<div class="wk-time' + (isLive ? ' wk-time-live' : '') + '">' + (isLive ? '<span class="live-dot"></span>' : '') + timeStr + '</div>';
+      html += '</div>';
+    });
+    html += '</div>';
+  });
+
+  $('weeklyOutlook').innerHTML = html;
+}
+
+// ===========================================================================
 // NBA NEWS
 // ===========================================================================
 async function loadNews() {
@@ -416,6 +570,7 @@ async function refreshAll() {
     loadNews()
   ]);
   await loadFavs();
+  loadWeeklyOutlook(); // fire and forget — don't block refresh
 
   btn.classList.remove('spinning');
   var now=new Date();
@@ -452,6 +607,7 @@ async function boot() {
       loadNews()
     ]);
     await loadFavs();
+    loadWeeklyOutlook();
   } catch(e) {}
   dismissSplash();
   startAutoRefresh();
