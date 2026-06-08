@@ -330,6 +330,37 @@ async function loadFire() {
 // ===========================================================================
 // ESPN SCOREBOARD
 // ===========================================================================
+// Extract playoff/series info from an ESPN event
+function getSeriesInfo(game) {
+  var c = game.competitions && game.competitions[0];
+  if (!c) return null;
+  var isPostseason = game.season && game.season.type === 3;
+  if (!isPostseason) return null;
+
+  var info = { isPlayoff: true, title: '', summary: '', gameNumber: 0, headline: '' };
+
+  // series object (e.g. {title:"NBA Finals", summary:"NYK leads 2-0", completed:false, ...})
+  var series = c.series;
+  if (series) {
+    info.title = series.title || '';
+    info.summary = series.summary || '';
+    info.gameNumber = series.gameNumber || 0;
+  }
+
+  // notes array — often has "NBA Finals - Game 3" as headline
+  var notes = c.notes || [];
+  for (var i = 0; i < notes.length; i++) {
+    if (notes[i].headline) { info.headline = notes[i].headline; break; }
+  }
+
+  // Build display string: prefer headline, fall back to constructed text
+  if (!info.headline && info.title) {
+    info.headline = info.title + (info.gameNumber ? ' - Game ' + info.gameNumber : '');
+  }
+
+  return (info.headline || info.summary) ? info : null;
+}
+
 function gameHTML(game,i,sport) {
   var c=game.competitions&&game.competitions[0]; if(!c)return '';
   var teams=c.competitors||[];
@@ -345,6 +376,10 @@ function gameHTML(game,i,sport) {
   var cls='game-card';
   if(isLive)cls+=' live-game';
   if(isFav)cls+=' fav-game';
+
+  // Playoff series info
+  var seriesInfo = (sport === 'nba' || sport === 'ncaab') ? getSeriesInfo(game) : null;
+  if(seriesInfo) cls += ' playoff-game';
 
   var hW=false,aW=false;
   if(isFinal){hW=Number(home.score)>Number(away.score);aW=Number(away.score)>Number(home.score);}
@@ -371,8 +406,19 @@ function gameHTML(game,i,sport) {
     sHTML='<span class="g-status">'+stTxt+'</span>';
   }
 
+  // Build playoff badge HTML
+  var seriesHTML = '';
+  if (seriesInfo) {
+    seriesHTML = '<div class="series-bar">';
+    seriesHTML += '<span class="series-badge">🏆 PLAYOFFS</span>';
+    if (seriesInfo.headline) seriesHTML += '<span class="series-title">' + seriesInfo.headline + '</span>';
+    if (seriesInfo.summary) seriesHTML += '<span class="series-summary">' + seriesInfo.summary + '</span>';
+    seriesHTML += '</div>';
+  }
+
   return '<div class="'+cls+'" data-i="'+(i%10)+'">'
     +'<div class="g-sbar">'+sHTML+(bcT?'<span class="g-bc">'+bcT+'</span>':'')+'</div>'
+    +seriesHTML
     +tRow(away,aW,hW&&isFinal)+tRow(home,hW,aW&&isFinal)+'</div>';
 }
 
@@ -393,6 +439,137 @@ async function loadBoard(sport,boardId,countId) {
     $(boardId).innerHTML=errHTML('—','Scores unavailable right now','Trying again shortly');
     var cel2=$(countId); if(cel2)cel2.textContent='\u2014';
   }
+}
+
+// ===========================================================================
+// NBA UPCOMING GAMES (next 6 days)
+// ===========================================================================
+async function loadNBAUpcoming() {
+  var container = $('nbaUpcoming');
+  if (!container) return;
+
+  var dates = [];
+  var now = new Date();
+  for (var i = 1; i <= 6; i++) {
+    var d = new Date(now);
+    d.setDate(d.getDate() + i);
+    var yyyy = d.getFullYear();
+    var mm = String(d.getMonth() + 1).padStart(2, '0');
+    var dd = String(d.getDate()).padStart(2, '0');
+    dates.push({
+      str: yyyy + mm + dd,
+      date: d,
+      label: d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+    });
+  }
+
+  // Fetch all 6 days in parallel
+  var dayResults = await Promise.allSettled(dates.map(function(wd) {
+    return fetchJ(SPORT_EP.nba + '?dates=' + wd.str, 10000).then(function(data) {
+      return { dateInfo: wd, events: data.events || [] };
+    });
+  }));
+
+  var html = '';
+  var totalGames = 0;
+
+  dayResults.forEach(function(result) {
+    if (result.status !== 'fulfilled' || !result.value.events.length) return;
+    var dayData = result.value;
+    totalGames += dayData.events.length;
+
+    html += '<div class="upcoming-day">';
+    html += '<div class="upcoming-day-hdr">' + dayData.dateInfo.label
+      + '<span class="upcoming-day-ct">' + dayData.events.length + ' game'
+      + (dayData.events.length > 1 ? 's' : '') + '</span></div>';
+
+    dayData.events.forEach(function(ev, idx) {
+      var comp = ev.competitions && ev.competitions[0];
+      if (!comp) return;
+      var teams = comp.competitors || [];
+      var home = teams.find(function(t) { return t.homeAway === 'home'; }) || teams[0];
+      var away = teams.find(function(t) { return t.homeAway === 'away'; }) || teams[1];
+      if (!home || !away) return;
+
+      var st = ev.status && ev.status.type;
+      var stState = st && st.state;
+      var stTxt = (st && (st.shortDetail || st.detail)) || '';
+      var isLive = stState === 'in';
+      var isFinal = stState === 'post';
+      var isPre = stState === 'pre';
+      var isFav = FAV_IDS.has(Number(home.team && home.team.id)) || FAV_IDS.has(Number(away.team && away.team.id));
+
+      var gameDate = new Date(ev.date || comp.date);
+      var timeStr = isPre ? gameDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : stTxt;
+
+      var homeName = (home.team && (home.team.shortDisplayName || home.team.abbreviation || home.team.name)) || '?';
+      var awayName = (away.team && (away.team.shortDisplayName || away.team.abbreviation || away.team.name)) || '?';
+      var homeLogo = (home.team && home.team.logo) || '';
+      var awayLogo = (away.team && away.team.logo) || '';
+
+      // Broadcasts
+      var bcast = comp.broadcasts ? comp.broadcasts.flatMap(function(b) { return b.names || []; }) : [];
+      var bcT = bcast.slice(0, 2).join(', ');
+
+      // Series info
+      var seriesInfo = getSeriesInfo(ev);
+
+      var cardCls = 'upcoming-game';
+      if (isFav) cardCls += ' upcoming-fav';
+      if (isLive) cardCls += ' upcoming-live';
+      if (seriesInfo) cardCls += ' upcoming-playoff';
+
+      var scoreHtml = '';
+      if (isLive || isFinal) {
+        scoreHtml = '<span class="upcoming-score">' + (away.score || '0') + ' - ' + (home.score || '0') + '</span>';
+      }
+
+      html += '<div class="' + cardCls + '">';
+
+      // Series info row
+      if (seriesInfo) {
+        html += '<div class="upcoming-series">';
+        html += '<span class="upcoming-series-badge">🏆</span>';
+        if (seriesInfo.headline) html += '<span class="upcoming-series-hl">' + seriesInfo.headline + '</span>';
+        if (seriesInfo.summary) html += '<span class="upcoming-series-sum">' + seriesInfo.summary + '</span>';
+        html += '</div>';
+      }
+
+      // Teams row
+      html += '<div class="upcoming-matchup">';
+      html += '<div class="upcoming-team">';
+      if (awayLogo) html += '<img class="upcoming-logo" src="' + awayLogo + '" alt="" loading="lazy" onerror="this.style.display=\'none\'">';
+      html += '<span class="upcoming-name">' + awayName + '</span></div>';
+      html += '<span class="upcoming-vs">' + (isLive || isFinal ? scoreHtml : '@') + '</span>';
+      html += '<div class="upcoming-team">';
+      if (homeLogo) html += '<img class="upcoming-logo" src="' + homeLogo + '" alt="" loading="lazy" onerror="this.style.display=\'none\'">';
+      html += '<span class="upcoming-name">' + homeName + '</span></div>';
+      html += '</div>';
+
+      // Meta row
+      html += '<div class="upcoming-meta">';
+      html += '<span class="upcoming-time' + (isLive ? ' upcoming-time-live' : '') + '">';
+      if (isLive) html += '<span class="live-dot"></span>';
+      html += timeStr + '</span>';
+      if (bcT) html += '<span class="upcoming-bc">' + bcT + '</span>';
+      html += '</div>';
+
+      html += '</div>';
+    });
+
+    html += '</div>';
+  });
+
+  if (!html) {
+    container.innerHTML = '';
+    return;
+  }
+
+  container.innerHTML = '<div class="sh" style="margin-top:22px">'
+    + '<svg class="sh-icon" viewBox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+    + '<span class="sh-t">Coming Up</span>'
+    + '<span class="sh-badge">' + totalGames + '</span></div>'
+    + html;
 }
 
 // ===========================================================================
@@ -488,10 +665,22 @@ async function loadWeeklyOutlook() {
   var weekDates = getWeekDates();
   var allGames = [];
 
-  // Fetch each sport's schedule for the week
-  var sportKeys = Object.keys(SCHEDULE_EP);
+  // Determine which sports are currently in-season to avoid wasted API calls.
+  // NBA season: Oct-Jun (postseason May-Jun), NFL: Sep-Feb, MLB: Mar-Oct
+  var month = new Date().getMonth(); // 0-indexed
+  var activeSports = [];
+  // NBA: roughly Oct(9) through Jun(5) inclusive
+  if (month >= 9 || month <= 5) activeSports.push('nba');
+  // MLB: roughly Mar(2) through Oct(9) inclusive
+  if (month >= 2 && month <= 9) activeSports.push('mlb');
+  // NFL: roughly Sep(8) through Feb(1) inclusive
+  if (month >= 8 || month <= 1) activeSports.push('nfl');
+  // Fallback: always include at least NBA
+  if (!activeSports.length) activeSports.push('nba');
+
+  // Fetch each in-season sport's schedule for the week
   var fetches = [];
-  sportKeys.forEach(function(sport) {
+  activeSports.forEach(function(sport) {
     weekDates.forEach(function(wd) {
       fetches.push(
         fetchJ(SCHEDULE_EP[sport] + wd.str, 8000)
@@ -522,6 +711,8 @@ async function loadWeeklyOutlook() {
               geoBcast.forEach(function(gb) {
                 if (gb.media && gb.media.shortName && bcast.indexOf(gb.media.shortName) === -1) bcast.push(gb.media.shortName);
               });
+              // Get series info for this event
+              var evSeriesInfo = getSeriesInfo(ev);
               allGames.push({
                 sport: sport,
                 date: gameDate,
@@ -533,7 +724,8 @@ async function loadWeeklyOutlook() {
                 statusText: (st && (st.shortDetail || st.detail)) || '',
                 isFav: isFavGame,
                 name: ev.shortName || ev.name || '',
-                broadcast: bcast.slice(0, 3).join(', ')
+                broadcast: bcast.slice(0, 3).join(', '),
+                seriesInfo: evSeriesInfo
               });
             });
           })
@@ -597,7 +789,14 @@ async function loadWeeklyOutlook() {
         scoreHtml = '<span class="wk-score">' + aScore + ' - ' + hScore + '</span>';
       }
 
-      html += '<div class="wk-game' + (g.isFav ? ' wk-fav' : '') + (isLive ? ' wk-live' : '') + '">';
+      html += '<div class="wk-game' + (g.isFav ? ' wk-fav' : '') + (isLive ? ' wk-live' : '') + (g.seriesInfo ? ' wk-playoff' : '') + '">';
+      if (g.seriesInfo) {
+        html += '<div class="wk-series-row"><span class="wk-series-badge">🏆</span>';
+        if (g.seriesInfo.headline) html += '<span class="wk-series-hl">' + g.seriesInfo.headline + '</span>';
+        if (g.seriesInfo.summary) html += '<span class="wk-series-sum">' + g.seriesInfo.summary + '</span>';
+        html += '</div>';
+      }
+      html += '<div class="wk-game-inner">';
       html += '<div class="wk-sport">' + sportIcon(g.sport) + '</div>';
       html += '<div class="wk-teams">';
       html += '<div class="wk-team">' + (awayLogo ? '<img class="wk-logo" src="' + awayLogo + '" alt="" loading="lazy" onerror="this.style.display=\'none\'">' : '') + '<span>' + awayName + '</span></div>';
@@ -608,6 +807,7 @@ async function loadWeeklyOutlook() {
       html += '<div class="wk-time' + (isLive ? ' wk-time-live' : '') + '">' + (isLive ? '<span class="live-dot"></span>' : '') + timeStr + '</div>';
       if (g.broadcast) html += '<div class="wk-bc">' + g.broadcast + '</div>';
       html += '</div>';
+      html += '</div>'; // close wk-game-inner
       html += '</div>';
     });
     html += '</div>';
@@ -660,6 +860,7 @@ async function refreshAll() {
   ]);
   await loadFavs();
   loadWeeklyOutlook(); // fire and forget — don't block refresh
+  loadNBAUpcoming(); // fire and forget — upcoming NBA games
 
   btn.classList.remove('spinning');
   var now=new Date();
@@ -697,6 +898,7 @@ async function boot() {
     ]);
     await loadFavs();
     loadWeeklyOutlook();
+    loadNBAUpcoming();
   } catch(e) {}
   dismissSplash();
   startAutoRefresh();

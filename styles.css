@@ -241,3 +241,55 @@ body{height:100%;height:-webkit-fill-available;overflow:hidden;background:var(--
 .fire-section-hdr{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--t3);padding:10px 4px 4px;border-bottom:1px solid var(--bdr);margin:8px 0 4px}
 
 [data-i="0"]{animation-delay:.03s}[data-i="1"]{animation-delay:.07s}[data-i="2"]{animation-delay:.11s}[data-i="3"]{animation-delay:.15s}[data-i="4"]{animation-delay:.19s}[data-i="5"]{animation-delay:.23s}[data-i="6"]{animation-delay:.27s}[data-i="7"]{animation-delay:.31s}[data-i="8"]{animation-delay:.35s}[data-i="9"]{animation-delay:.39s}
+
+/* ==========================================================================
+   PLAYOFF / SERIES INFO — Game Cards
+   ========================================================================== */
+.playoff-game{border-color:rgba(240,180,41,.25) !important;box-shadow:0 0 16px rgba(240,180,41,.06)}
+.playoff-game::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,#f0b429,#ffd700,#f0b429);border-radius:2px 2px 0 0}
+
+.series-bar{display:flex;align-items:center;gap:8px;padding:6px 10px;margin:-2px -2px 10px;background:rgba(240,180,41,.06);border-radius:8px;flex-wrap:wrap}
+.series-badge{font-size:9px;font-weight:800;color:#1a1a2e;background:linear-gradient(135deg,#f0b429,#ffd700);padding:2px 8px;border-radius:4px;letter-spacing:.6px;text-transform:uppercase;white-space:nowrap}
+.series-title{font-size:12px;font-weight:700;color:#f0b429;letter-spacing:.2px}
+.series-summary{font-size:11px;font-weight:600;color:var(--t2);margin-left:auto}
+
+/* ==========================================================================
+   NBA UPCOMING GAMES — "Coming Up" Section on Hoops Page
+   ========================================================================== */
+.upcoming-day{margin-bottom:14px}
+.upcoming-day-hdr{display:flex;justify-content:space-between;align-items:center;font-size:13px;font-weight:700;color:var(--t2);padding:6px 4px 4px;border-bottom:1px solid var(--bdr);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
+.upcoming-day-ct{font-size:11px;font-weight:400;color:var(--t3)}
+
+.upcoming-game{background:var(--card);border:1px solid var(--bdr);border-radius:14px;padding:12px 14px;margin-bottom:8px;transition:background .2s,transform .15s;position:relative;overflow:hidden}
+.upcoming-game:active{background:var(--card-h);transform:scale(.98)}
+.upcoming-fav{border-left:3px solid var(--acc);padding-left:11px}
+.upcoming-live{border-color:rgba(239,68,68,.3);box-shadow:0 0 14px rgba(239,68,68,.06)}
+.upcoming-playoff{border-color:rgba(240,180,41,.2)}
+.upcoming-playoff::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,#f0b429,#ffd700,#f0b429)}
+
+.upcoming-series{display:flex;align-items:center;gap:6px;padding:4px 8px;margin-bottom:8px;background:rgba(240,180,41,.06);border-radius:6px;flex-wrap:wrap}
+.upcoming-series-badge{font-size:12px;line-height:1}
+.upcoming-series-hl{font-size:11px;font-weight:700;color:#f0b429;letter-spacing:.2px}
+.upcoming-series-sum{font-size:11px;font-weight:500;color:var(--t2);margin-left:auto}
+
+.upcoming-matchup{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.upcoming-team{display:flex;align-items:center;gap:6px;min-width:0;flex:1}
+.upcoming-logo{width:24px;height:24px;border-radius:4px;flex:0 0 24px;object-fit:contain}
+.upcoming-name{font-size:14px;font-weight:700;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.upcoming-vs{font-size:12px;color:var(--t3);font-weight:500;flex:0 0 auto;text-align:center;min-width:24px}
+.upcoming-score{font-size:13px;font-weight:700;color:var(--t1);white-space:nowrap}
+
+.upcoming-meta{display:flex;align-items:center;gap:10px}
+.upcoming-time{font-size:12px;color:var(--t3);display:flex;align-items:center;gap:4px}
+.upcoming-time-live{color:var(--red);font-weight:600}
+.upcoming-bc{font-size:10px;color:var(--acc);font-weight:600;text-transform:uppercase;letter-spacing:.3px;margin-left:auto}
+
+/* ==========================================================================
+   WEEKLY OUTLOOK — Playoff Series Row
+   ========================================================================== */
+.wk-playoff{flex-direction:column;align-items:stretch !important;gap:0 !important}
+.wk-game-inner{display:flex;align-items:center;gap:8px;flex:1;min-width:0;width:100%}
+.wk-series-row{display:flex;align-items:center;gap:6px;padding:3px 6px;margin-bottom:4px;background:rgba(240,180,41,.06);border-radius:4px;flex-wrap:wrap}
+.wk-series-badge{font-size:10px;line-height:1}
+.wk-series-hl{font-size:10px;font-weight:700;color:#f0b429;letter-spacing:.2px}
+.wk-series-sum{font-size:10px;font-weight:500;color:var(--t2);margin-left:auto}
