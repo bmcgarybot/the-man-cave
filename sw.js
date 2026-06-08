@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mancave-v1';
+const CACHE_NAME = 'mancave-v8';
 const STATIC_ASSETS = [
   './',
   './index.html',
@@ -54,18 +54,18 @@ self.addEventListener('fetch', function(e) {
     return;
   }
 
-  // Static assets: cache-first
+  // Static assets: network-first so code updates load immediately
   e.respondWith(
-    caches.match(e.request).then(function(cached) {
-      return cached || fetch(e.request).then(function(resp) {
-        if (resp.ok) {
-          var clone = resp.clone();
-          caches.open(CACHE_NAME).then(function(cache) {
-            cache.put(e.request, clone);
-          });
-        }
-        return resp;
-      });
+    fetch(e.request).then(function(resp) {
+      if (resp.ok) {
+        var clone = resp.clone();
+        caches.open(CACHE_NAME).then(function(cache) {
+          cache.put(e.request, clone);
+        });
+      }
+      return resp;
+    }).catch(function() {
+      return caches.match(e.request);
     })
   );
 });
